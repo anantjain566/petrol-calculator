@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracking Distance Covered</title>
+    <style>
+        /* CSS styles */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .live-option {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .live-option p {
+            margin: 0;
+            padding: 5px 0;
+        }
+
+        .live-calculation {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .live-calculation p {
+            margin: 0;
+            padding: 5px 0;
+        }
+
+        #totalCost {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tracking Distance Covered</h1>
+        <div id="liveOption" class="live-option" style="display: none;">
+            <p>Live Option: <span id="liveStatus">Tracking in progress</span></p>
+        </div>
+        <div class="live-calculation" style="display: none;">
+            <p>Distance Covered: <span id="distanceCovered">0</span> kilometers</p>
+            <p>Total Cost: <span id="totalCost">0</span> Rs.</p>
+        </div>
+        <button id="startBtn" onclick="startTracking()">Start Tracking</button>
+        <button id="stopBtn" onclick="stopTracking()" style="display: none;">Stop Tracking</button>
+    </div>
+
+    <script>
+        var totalDistance = 0;
+        var totalCost = 0;
+        var mileage;
+        var petrolPrice;
+        var trackingInterval;
+        var lastPosition;
+
+        function startTracking() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.watchPosition(updateDistance, null, { enableHighAccuracy: true });
+                mileage = parseFloat(window.opener.document.getElementById('mileage').value);
+                petrolPrice = parseFloat(window.opener.document.getElementById('petrolPrice').value);
+                document.getElementById('liveOption').style.display = 'block';
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'inline';
+                alert("Tracking started.");
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        }
+
+        function updateDistance(position) {
+            if (lastPosition) {
+                var distance = calculateDistance(lastPosition.coords.latitude, lastPosition.coords.longitude, position.coords.latitude, position.coords.longitude);
+                totalDistance += distance;
+                document.getElementById('distanceCovered').innerText = totalDistance.toFixed(2);
+                calculateCost();
+            }
+            lastPosition = position;
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            var R = 6371; // Radius of the earth in km
+            var dLat = deg2rad(lat2 - lat1);
+            var dLon = deg2rad(lon2 - lon1);
+            var a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            var d = R * c; // Distance in km
+            return d;
+        }
+
+        function deg2rad(deg) {
+            return deg * (Math.PI / 180);
+        }
+
+        function calculateCost() {
+            var petrolUsed = totalDistance / mileage;
+            totalCost = petrolUsed * petrolPrice;
+            document.getElementById('totalCost').innerText = totalCost.toFixed(2);
+        }
+
+        function stopTracking() {
+            clearInterval(trackingInterval);
+            document.getElementById('liveOption').style.display = 'none';
+            document.getElementById('startBtn').style.display = 'inline';
+            document.getElementById('stopBtn').style.display = 'none';
+            alert("Tracking stopped.");
+        }
+    </script>
+</body>
+</html>
